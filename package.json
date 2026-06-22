@@ -22,7 +22,7 @@
     "productName": "MLX Server",
     "mac": {
       "category": "public.app-category.developer-tools",
-      "icon": "mlx-icon.icns",
+      "icon": "assets/mlx-icon.icns",
       "target": [
         "dmg",
         "dir"
@@ -35,7 +35,7 @@
     },
     "dmg": {
       "title": "MLX Server",
-      "icon": "mlx-icon.icns",
+      "icon": "assets/mlx-icon.icns",
       "contents": [
         {
           "x": 130,
@@ -57,13 +57,11 @@
     "afterSign": "scripts/notarize.js",
     "files": [
       "main.js",
-      "chat.html",
-      "settings.html",
-      "setup.html",
-      "download.html",
+      "preload.js",
+      "renderer/**",
+      "assets/mlx-icon@2x.png",
+      "assets/mlx-icon.icns",
       "scripts/notarize.js",
-      "mlx-icon@2x.png",
-      "mlx-icon.icns",
       "entitlements.plist"
     ]
   }

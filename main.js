@@ -63,7 +63,7 @@ let chatWindow = null;
 let settingsWindow = null;
 let serverStatus = 'stopped'; // stopped | loading | running
 let runningModel = '';
-let iconPath = path.join(__dirname, 'mlx-icon@2x.png');
+let iconPath = path.join(__dirname, 'assets/mlx-icon@2x.png');
 
 const settingsPath = path.join(app.getPath('userData'), 'settings.json');
 
@@ -230,7 +230,7 @@ function openChat() {
         backgroundColor: getBgColor(),
         webPreferences: { nodeIntegration: true, contextIsolation: false }
     });
-    chatWindow.loadFile(path.join(__dirname, 'chat.html'));
+    chatWindow.loadFile(path.join(__dirname, 'renderer/chat.html'));
     chatWindow.on('closed', () => { chatWindow = null; });
 }
 
@@ -244,7 +244,7 @@ function openDownload() {
         backgroundColor: '#1a1a1a',
         webPreferences: { nodeIntegration: true, contextIsolation: false }
     });
-    downloadWindow.loadFile(path.join(__dirname, 'download.html'));
+    downloadWindow.loadFile(path.join(__dirname, 'renderer/download.html'));
     downloadWindow.on('closed', () => { downloadWindow = null; });
 }
 
@@ -259,7 +259,7 @@ function openSettings() {
         backgroundColor: '#1a1a1a',
         webPreferences: { nodeIntegration: true, contextIsolation: false }
     });
-    settingsWindow.loadFile(path.join(__dirname, 'settings.html'));
+    settingsWindow.loadFile(path.join(__dirname, 'renderer/settings.html'));
     settingsWindow.on('closed', () => { settingsWindow = null; });
 }
 
@@ -446,7 +446,7 @@ function openSetup() {
         backgroundColor: '#1a1a1a',
         webPreferences: { nodeIntegration: true, contextIsolation: false }
     });
-    setupWindow.loadFile(path.join(__dirname, 'setup.html'));
+    setupWindow.loadFile(path.join(__dirname, 'renderer/setup.html'));
 }
 
 ipcMain.handle('setup-check', async () => {
