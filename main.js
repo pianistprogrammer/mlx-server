@@ -8,7 +8,7 @@ let updateAvailable = false;
 let updateChecking = false;
 
 const CURRENT_VERSION = app.getVersion();
-const GITHUB_REPO = 'mlx-server/mlx-server-menu'; // your GitHub repo
+const GITHUB_REPO = 'pianistprogrammer/mlx-server';
 
 function checkForUpdate(silent = true) {
     if (updateChecking) return;

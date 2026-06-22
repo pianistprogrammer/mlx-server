@@ -46,7 +46,7 @@ Download the latest `.dmg` from [Releases](../../releases), open it, and drag **
 ### Or run from source
 
 ```bash
-git clone https://github.com/your-username/mlx-server-menu
+git clone https://github.com/pianistprogrammer/mlx-server
 cd mlx-server-menu
 npm install
 npm start
