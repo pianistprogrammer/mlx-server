@@ -154,7 +154,16 @@ h1 em { font-style: normal; color: var(--text2); }
   font-size: clamp(28px, 4vw, 42px); font-weight: 700;
   letter-spacing: -0.5px; margin-bottom: 56px; line-height: 1.2;
 }
-.features-grid {
+.ollama-note {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 20px;
+  font-size: 13px; color: var(--text2); line-height: 1.6;
+  margin-bottom: 32px;
+}
+.ollama-note svg { flex-shrink: 0; margin-top: 2px; color: var(--text3); }
+.ollama-note strong { color: var(--text); }
+
   display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
 }
@@ -230,7 +239,7 @@ footer {
 <section class="hero">
   <div class="hero-badge">
     <span></span>
-    Apple Silicon · Free & Open Source
+    Inspired by Ollama · Apple Silicon · Free & Open Source
   </div>
   <h1>Local AI, <em>beautifully</em><br>in your menu bar</h1>
   <p class="hero-sub">
@@ -258,7 +267,7 @@ footer {
     </div>
     <div class="preview-body">
       <div class="preview-sidebar">
-        <div class="preview-sidebar-item">
+        <div class="preview-sidebar-item active">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           New Chat
         </div>
@@ -266,10 +275,13 @@ footer {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2"/></svg>
           Settings
         </div>
+        <div class="preview-sidebar-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Model
+        </div>
         <div style="margin-top:16px; padding: 4px; font-size:11px; color:#48484a;">Recent</div>
-        <div class="preview-sidebar-item active">My first chat</div>
+        <div class="preview-sidebar-item" style="color:var(--text2);">My first chat</div>
         <div class="preview-sidebar-item">Code review</div>
-        <div class="preview-sidebar-item">Summarise PDF</div>
       </div>
       <div class="preview-chat">
         <div class="preview-msg-user">What can you help me with?</div>
@@ -291,6 +303,10 @@ footer {
 <section class="features">
   <div class="section-label">Features</div>
   <h2 class="section-title">Everything you need,<br>nothing you don't</h2>
+  <div class="ollama-note">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    Inspired by <strong>Ollama</strong> — MLX Server brings the same seamless local AI experience to Apple Silicon, powered by Apple's <strong>MLX framework</strong> for maximum performance on M-series chips.
+  </div>
   <div class="features-grid">
     <div class="feature-card">
       <div class="feature-icon">
