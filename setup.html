@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>MLX Server — Setup</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #1a1a1a; color: #e0e0e0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 72px 32px 32px; -webkit-app-region: drag; }
+body * { -webkit-app-region: no-drag; }
+
+h1 { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+.subtitle { font-size: 13px; color: #666; margin-bottom: 28px; }
+
+.checks { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.check { background: #222; border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+.check-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; }
+.check-icon.ok { background: #1a3a1a; color: #34c759; }
+.check-icon.fail { background: #3a1a1a; color: #ff453a; }
+.check-icon.checking { background: #2a2a2a; color: #666; }
+.check-body { flex: 1; }
+.check-title { font-size: 14px; font-weight: 500; }
+.check-desc { font-size: 12px; color: #666; margin-top: 2px; }
+.check-desc.fail { color: #ff453a; }
+
+.install-box { width: 100%; max-width: 420px; background: #111; border: 1px solid #2a2a2a; border-radius: 10px; padding: 14px 16px; font-family: monospace; font-size: 12px; color: #aaa; line-height: 1.8; display: none; margin-bottom: 20px; position: relative; }
+.install-box.visible { display: block; }
+.copy-btn { position: absolute; top: 10px; right: 10px; background: #2a2a2a; border: none; color: #888; font-size: 11px; padding: 4px 10px; border-radius: 5px; cursor: pointer; }
+.copy-btn:hover { color: #ccc; }
+
+.actions { display: flex; gap: 10px; }
+.btn { padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; }
+.btn-primary { background: #007AFF; color: white; }
+.btn-primary:hover { background: #0066dd; }
+.btn-primary:disabled { background: #333; color: #666; cursor: default; }
+.btn-secondary { background: #2a2a2a; color: #aaa; }
+.btn-secondary:hover { background: #333; }
+
+#progress { font-size: 12px; color: #666; margin-top: 16px; min-height: 18px; }
+</style>
+</head>
+<body>
+<h1>Welcome to MLX Server</h1>
+<p class="subtitle">Checking your system requirements...</p>
+
+<div class="checks">
+  <div class="check" id="chk-silicon">
+    <div class="check-icon checking" id="icon-silicon">?</div>
+    <div class="check-body">
+      <div class="check-title">Apple Silicon</div>
+      <div class="check-desc" id="desc-silicon">Checking CPU...</div>
+    </div>
+  </div>
+  <div class="check" id="chk-python">
+    <div class="check-icon checking" id="icon-python">?</div>
+    <div class="check-body">
+      <div class="check-title">Python 3.11 or 3.12</div>
+      <div class="check-desc" id="desc-python">Checking Python...</div>
+    </div>
+  </div>
+  <div class="check" id="chk-mlx-lm">
+    <div class="check-icon checking" id="icon-mlx-lm">?</div>
+    <div class="check-body">
+      <div class="check-title">mlx-lm</div>
+      <div class="check-desc" id="desc-mlx-lm">Checking mlx-lm...</div>
+    </div>
+  </div>
+  <div class="check" id="chk-mlx-vlm">
+    <div class="check-icon checking" id="icon-mlx-vlm">?</div>
+    <div class="check-body">
+      <div class="check-title">mlx-vlm</div>
+      <div class="check-desc" id="desc-mlx-vlm">Checking mlx-vlm...</div>
+    </div>
+  </div>
+</div>
+
+<div class="install-box" id="install-box">
+  <button class="copy-btn" onclick="copyCmd()">Copy</button>
+  <span id="install-cmd"></span>
+</div>
+
+<div class="actions">
+  <button class="btn btn-secondary" onclick="skip()">Skip for now</button>
+  <button class="btn btn-primary" id="install-btn" style="display:none" onclick="install()">Install Missing</button>
+  <button class="btn btn-primary" id="open-btn" style="display:none" onclick="proceed()">Open MLX Server →</button>
+</div>
+<div id="progress"></div>
+
+<script>
+const { ipcRenderer } = require('electron');
+
+function setCheck(id, status, desc) {
+    const icon = document.getElementById(`icon-${id}`);
+    const descEl = document.getElementById(`desc-${id}`);
+    icon.className = `check-icon ${status}`;
+    icon.textContent = status === 'ok' ? '✓' : status === 'fail' ? '✗' : '…';
+    descEl.textContent = desc;
+    descEl.className = `check-desc${status === 'fail' ? ' fail' : ''}`;
+}
+
+function copyCmd() {
+    const cmd = document.getElementById('install-cmd').textContent;
+    navigator.clipboard.writeText(cmd);
+    document.querySelector('.copy-btn').textContent = 'Copied!';
+    setTimeout(() => document.querySelector('.copy-btn').textContent = 'Copy', 1500);
+}
+
+function skip() { ipcRenderer.invoke('setup-skip'); }
+function proceed() { ipcRenderer.invoke('setup-done'); }
+
+function install() {
+    document.getElementById('install-btn').disabled = true;
+    document.getElementById('progress').textContent = 'Installing... this may take a few minutes.';
+    ipcRenderer.invoke('setup-install').then(result => {
+        if (result.ok) {
+            document.getElementById('progress').textContent = '✓ Installation complete!';
+            document.getElementById('install-btn').style.display = 'none';
+            document.getElementById('open-btn').style.display = 'block';
+            document.getElementById('install-box').classList.remove('visible');
+            runChecks();
+        } else {
+            document.getElementById('progress').textContent = 'Installation failed. Try running the command manually in Terminal.';
+            document.getElementById('install-btn').disabled = false;
+        }
+    });
+}
+
+ipcRenderer.on('check-result', (_, results) => {
+    setCheck('silicon', results.silicon ? 'ok' : 'fail',
+        results.silicon ? 'Apple Silicon detected ✓' : 'Intel Macs are not supported — MLX requires Apple Silicon');
+    setCheck('python', results.python ? 'ok' : 'fail',
+        results.python ? `Python ${results.pythonVersion} ✓` : 'Python 3.11 or 3.12 required — install from python.org');
+    setCheck('mlx-lm', results.mlxLm ? 'ok' : 'fail',
+        results.mlxLm ? `mlx-lm ${results.mlxLmVersion} ✓` : 'Not installed');
+    setCheck('mlx-vlm', results.mlxVlm ? 'ok' : 'fail',
+        results.mlxVlm ? `mlx-vlm ${results.mlxVlmVersion} ✓` : 'Not installed');
+
+    const allOk = results.silicon && results.python && results.mlxLm && results.mlxVlm;
+    const canInstall = results.silicon && results.python && (!results.mlxLm || !results.mlxVlm);
+
+    if (allOk) {
+        document.getElementById('open-btn').style.display = 'block';
+        document.querySelector('.subtitle').textContent = 'Everything is ready!';
+    } else if (!results.silicon) {
+        document.querySelector('.subtitle').textContent = 'MLX requires an Apple Silicon Mac.';
+    } else if (!results.python) {
+        document.querySelector('.subtitle').textContent = 'Python 3 is required. Install it first, then relaunch.';
+        const box = document.getElementById('install-box');
+        document.getElementById('install-cmd').textContent = 'brew install python3';
+        box.classList.add('visible');
+    } else if (canInstall) {
+        document.querySelector('.subtitle').textContent = 'Some dependencies are missing.';
+        const missing = [];
+        if (!results.mlxLm) missing.push('mlx-lm');
+        if (!results.mlxVlm) missing.push('mlx-vlm');
+        document.getElementById('install-cmd').textContent = `pip3 install ${missing.join(' ')}`;
+        document.getElementById('install-box').classList.add('visible');
+        document.getElementById('install-btn').style.display = 'block';
+    }
+});
+
+async function runChecks() { await ipcRenderer.invoke('setup-check'); }
+runChecks();
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+{
+  "name": "mlx-server-menu",
+  "version": "1.0.1",
+  "description": "MLX Server Menu Bar App for macOS",
+  "author": "MLX Server",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac"
+  },
+  "dependencies": {
+    "semver": "^7.5.4"
+  },
+  "devDependencies": {
+    "@electron/notarize": "^3.1.1",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3",
+    "playwright": "^1.61.0"
+  },
+  "build": {
+    "appId": "com.mlx.menubar",
+    "productName": "MLX Server",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "mlx-icon.icns",
+      "target": [
+        "dmg",
+        "dir"
+      ],
+      "identity": null,
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.plist",
+      "entitlementsInherit": "entitlements.plist"
+    },
+    "dmg": {
+      "title": "MLX Server",
+      "icon": "mlx-icon.icns",
+      "contents": [
+        {
+          "x": 130,
+          "y": 180,
+          "type": "file"
+        },
+        {
+          "x": 370,
+          "y": 180,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 500,
+        "height": 320
+      }
+    },
+    "afterSign": "scripts/notarize.js",
+    "files": [
+      "main.js",
+      "chat.html",
+      "settings.html",
+      "setup.html",
+      "download.html",
+      "scripts/notarize.js",
+      "mlx-icon@2x.png",
+      "mlx-icon.icns",
+      "entitlements.plist"
+    ]
+  }
+}

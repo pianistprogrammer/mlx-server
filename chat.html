@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>MLX Chat</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #1c1c1e;
+  --bg2: #232325;
+  --bg3: #2c2c2e;
+  --bg4: #3a3a3c;
+  --sidebar-bg: #1c1c1e;
+  --border: #38383a;
+  --text: #f2f2f7;
+  --text2: #aeaeb2;
+  --text3: #636366;
+  --text4: #48484a;
+  --input-bg: #2c2c2e;
+  --msg-user-bg: #2c2c2e;
+  --code-bg: #161618;
+  --code-border: #38383a;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #ffffff;
+    --bg2: #f2f2f7;
+    --bg3: #e5e5ea;
+    --bg4: #d1d1d6;
+    --sidebar-bg: #ffffff;
+    --border: #c7c7cc;
+    --text: #000000;
+    --text2: #3c3c43;
+    --text3: #8e8e93;
+    --text4: #aeaeb2;
+    --input-bg: #f2f2f7;
+    --msg-user-bg: #e5e5ea;
+    --code-bg: #f2f2f7;
+    --code-border: #c7c7cc;
+  }
+}
+
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; font-size: 16px; }
+
+/* ── Titlebar ── */
+#topbar { height: 46px; width: 100%; flex-shrink: 0; display: flex; align-items: center; -webkit-app-region: drag; position: relative; }
+#topbar-spacer { width: 76px; flex-shrink: 0; }
+
+/* Collapsed-state buttons: toggle + new chat, near traffic lights */
+#topbar-buttons { display: none; align-items: center; gap: 2px; -webkit-app-region: no-drag; flex-shrink: 0; }
+body.sidebar-collapsed #topbar-buttons { display: flex; }
+
+/* Expanded-state toggle: pinned at right edge of sidebar (220px) */
+#sidebar-toggle-expanded { position: absolute; right: calc(100% - 220px); top: 8px; -webkit-app-region: no-drag; }
+body.sidebar-collapsed #sidebar-toggle-expanded { display: none; }
+
+.topbar-btn { width: 30px; height: 30px; background: none; border: none; cursor: pointer; color: var(--text3); display: flex; align-items: center; justify-content: center; border-radius: 7px; flex-shrink: 0; }
+.topbar-btn:hover { color: var(--text2); background: var(--bg3); }
+#topbar-right { flex: 1; display: flex; align-items: center; padding: 0 16px; }
+#status-indicator { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text3); margin-left: auto; -webkit-app-region: no-drag; }
+#status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--bg4); flex-shrink: 0; transition: background 0.3s; }
+#status-dot.running { background: #34c759; }
+#status-dot.loading { background: #ff9f0a; }
+#status-label { transition: color 0.3s; }
+#status-indicator.running #status-label { color: #34c759; }
+#status-indicator.loading #status-label { color: #ff9f0a; }
+
+/* ── Content row ── */
+#content { display: flex; flex: 1; min-height: 0; }
+
+/* ── Sidebar ── */
+#sidebar { width: 220px; background: var(--bg); display: flex; flex-direction: column; flex-shrink: 0; transition: width 0.22s ease; overflow: hidden; }
+#sidebar.collapsed { width: 0; }
+#sidebar-top { padding: 8px 8px 8px; display: flex; flex-direction: column; gap: 2px; }
+.sidebar-btn { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 8px; background: none; border: none; color: var(--text2); font-size: 14px; cursor: pointer; width: 100%; text-align: left; white-space: nowrap; }
+.sidebar-btn:hover { background: var(--bg3); }
+.sidebar-btn svg { opacity: 0.7; flex-shrink: 0; }
+#chat-list { flex: 1; overflow-y: auto; padding: 4px 12px 0; }
+#chat-list::-webkit-scrollbar { width: 0; }
+.chat-group-label { font-size: 11px; color: var(--text4); padding: 8px 4px 4px; letter-spacing: 0.3px; }
+.chat-item { padding: 7px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 1px; }
+.chat-item:hover { background: var(--bg2); color: var(--text2); }
+.chat-item.active { background: var(--bg3); color: var(--text); }
+
+/* Context menu */
+#ctx-menu { position: fixed; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 4px; min-width: 140px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 1000; display: none; }
+.ctx-item { padding: 7px 12px; border-radius: 5px; font-size: 13px; color: var(--text); cursor: pointer; }
+.ctx-item:hover { background: var(--bg4); }
+.ctx-item.danger { color: #ff453a; }
+.ctx-item.danger:hover { background: rgba(255,69,58,0.15); }
+
+/* ── Main ── */
+#main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+#messages { flex: 1; overflow-y: auto; padding: 24px 48px 12px; display: flex; flex-direction: column; gap: 24px; }
+#messages::-webkit-scrollbar { width: 5px; }
+#messages::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+
+.msg-user { align-self: flex-end; background: var(--msg-user-bg); padding: 11px 16px; border-radius: 18px 18px 4px 18px; font-size: 15px; line-height: 1.55; color: var(--text); max-width: 72%; }
+.msg-assistant { align-self: flex-start; font-size: 16px; line-height: 1.7; color: var(--text); max-width: 100%; }
+.msg-assistant p { margin-bottom: 12px; }
+.msg-assistant p:last-child { margin-bottom: 0; }
+.msg-assistant pre { background: var(--code-bg); border: 1px solid var(--code-border); padding: 14px 16px; border-radius: 10px; overflow-x: auto; margin: 10px 0; font-size: 13px; line-height: 1.5; }
+.msg-assistant code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 13.5px; }
+.msg-assistant pre code { background: none; padding: 0; }
+.msg-assistant strong { color: var(--text); }
+.msg-thinking { align-self: flex-start; color: var(--text3); font-size: 14px; font-style: italic; }
+#empty-state { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text4); font-size: 15px; }
+
+/* ── Input ── */
+#input-wrap { padding: 0 32px 28px; flex-shrink: 0; }
+#input-box { background: var(--input-bg); border-radius: 20px; border: 1px solid var(--border); padding: 14px 14px 10px 18px; display: flex; flex-direction: column; gap: 10px; }
+#input-box:focus-within { border-color: var(--text3); }
+#msg-input { background: none; border: none; outline: none; color: var(--text); font-size: 15px; resize: none; font-family: inherit; min-height: 26px; max-height: 180px; overflow-y: auto; line-height: 1.5; }
+#msg-input::placeholder { color: var(--text4); }
+#input-row { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+#add-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--bg3); border: none; cursor: pointer; color: var(--text3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+#add-btn:hover { background: var(--bg4); color: var(--text2); }
+#model-pill { background: var(--bg3); border: none; color: var(--text2); font-size: 13px; padding: 6px 12px 6px 14px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; max-width: 180px; overflow: hidden; position: relative; }
+#model-pill:hover { background: var(--bg4); }
+#model-pill svg { flex-shrink: 0; opacity: 0.6; }
+#model-pill-text { overflow: hidden; text-overflow: ellipsis; }
+#model-select { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+#send-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--text); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+#send-btn:disabled { background: var(--bg3); cursor: default; }
+</style>
+</head>
+<body>
+
+<!-- Full-width titlebar -->
+<div id="topbar">
+  <div id="topbar-spacer"></div>
+  <!-- Collapsed state: toggle + new chat near traffic lights -->
+  <div id="topbar-buttons">
+    <button class="topbar-btn" id="sidebar-toggle" title="Toggle sidebar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+    </button>
+    <button class="topbar-btn" id="new-chat-topbar" title="New Chat">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </button>
+  </div>
+  <!-- Expanded state: toggle pinned at right edge of sidebar -->
+  <button class="topbar-btn" id="sidebar-toggle-expanded" title="Toggle sidebar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+  </button>
+  <div id="topbar-right">
+    <div id="status-indicator">
+      <div id="status-dot"></div>
+      <span id="status-label">Stopped</span>
+    </div>
+  </div>
+</div>
+
+<!-- Content row below titlebar -->
+<div id="content">
+  <div id="sidebar">
+    <div id="sidebar-top">
+      <button class="sidebar-btn" id="new-chat-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        New Chat
+      </button>
+      <button class="sidebar-btn" id="settings-sidebar-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        Settings
+      </button>
+      <button class="sidebar-btn" id="download-sidebar-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Model
+      </button>
+    </div>
+    <div id="chat-list"></div>
+  </div>
+
+  <div id="main">
+    <div id="messages">
+      <div id="empty-state">Start a conversation</div>
+    </div>
+    <div id="input-wrap">
+      <div id="input-box">
+        <textarea id="msg-input" rows="1" placeholder="Send a message"></textarea>
+        <div id="input-row">
+          <button id="add-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+          <button id="model-pill">
+            <span id="model-pill-text">No model</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            <select id="model-select"></select>
+          </button>
+          <button id="send-btn" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="ctx-menu">
+  <div class="ctx-item" id="ctx-rename">Rename</div>
+  <div class="ctx-item danger" id="ctx-delete">Delete</div>
+</div>
+
+<script>
+const { ipcRenderer } = require('electron');
+const nodePath = require('path');
+
+let chats = JSON.parse(localStorage.getItem('mlx-chats') || '[]');
+let currentChatId = null;
+let isStreaming = false;
+let currentModel = '';
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function md(text) {
+    const blocks = [];
+    text = text.replace(/```[\s\S]*?```/g, m => { blocks.push(m); return `\x00${blocks.length-1}\x00`; });
+    text = esc(text);
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    text = text.replace(/\x00(\d+)\x00/g, (_, i) => {
+        const raw = blocks[i].replace(/^```\w*\n?/, '').replace(/```$/, '');
+        return `<pre><code>${esc(raw)}</code></pre>`;
+    });
+    text = text.split(/\n\n+/).map(p => p.trim() ? `<p>${p.replace(/\n/g,'<br>')}</p>` : '').join('');
+    return text;
+}
+
+function save() { localStorage.setItem('mlx-chats', JSON.stringify(chats)); }
+function getChat(id) { return chats.find(c => c.id === id); }
+
+function newChat() {
+    const chat = { id: Date.now().toString(), title: 'New Chat', messages: [] };
+    chats.unshift(chat); save(); switchChat(chat.id);
+}
+
+function switchChat(id) { currentChatId = id; renderSidebar(); renderMessages(); }
+
+function renderSidebar() {
+    const list = document.getElementById('chat-list');
+    if (!chats.length) { list.innerHTML = ''; return; }
+    list.innerHTML = '<div class="chat-group-label">Older</div>' +
+        chats.map(c => `<div class="chat-item${c.id===currentChatId?' active':''}" data-id="${c.id}" onclick="switchChat('${c.id}')">${esc(c.title)}</div>`).join('');
+    list.querySelectorAll('.chat-item').forEach(el => {
+        el.addEventListener('contextmenu', e => { e.preventDefault(); showCtxMenu(e, el.dataset.id); });
+    });
+}
+
+function renderMessages() {
+    const chat = getChat(currentChatId);
+    const el = document.getElementById('messages');
+    if (!chat || !chat.messages.length) { el.innerHTML = '<div id="empty-state">Start a conversation</div>'; return; }
+    el.innerHTML = chat.messages.map(m =>
+        m.role === 'user' ? `<div class="msg-user">${esc(m.content)}</div>` : `<div class="msg-assistant">${md(m.content)}</div>`
+    ).join('');
+    el.scrollTop = el.scrollHeight;
+}
+
+async function send() {
+    const input = document.getElementById('msg-input');
+    const text = input.value.trim();
+    if (!text || isStreaming) return;
+    if (!currentChatId) newChat();
+    const chat = getChat(currentChatId);
+    if (!chat.messages.length) chat.title = text.slice(0, 36) + (text.length > 36 ? '…' : '');
+    chat.messages.push({ role: 'user', content: text });
+    save(); input.value = ''; input.style.height = 'auto';
+    document.getElementById('send-btn').disabled = true;
+    renderMessages();
+    const el = document.getElementById('messages');
+    const thinking = document.createElement('div');
+    thinking.className = 'msg-thinking'; thinking.textContent = 'Thinking…';
+    el.appendChild(thinking); el.scrollTop = el.scrollHeight;
+    isStreaming = true;
+    try {
+        const port = await ipcRenderer.invoke('get-port');
+        const resp = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: currentModel, messages: chat.messages, stream: true, max_tokens: 2048 })
+        });
+        thinking.remove();
+        const assistantMsg = { role: 'assistant', content: '' };
+        chat.messages.push(assistantMsg);
+        const msgEl = document.createElement('div'); msgEl.className = 'msg-assistant'; el.appendChild(msgEl);
+        const reader = resp.body.getReader(); const dec = new TextDecoder();
+        while (true) {
+            const { done, value } = await reader.read(); if (done) break;
+            for (const line of dec.decode(value).split('\n')) {
+                if (!line.startsWith('data: ') || line.includes('[DONE]')) continue;
+                try { const delta = JSON.parse(line.slice(6)).choices?.[0]?.delta?.content;
+                    if (delta) { assistantMsg.content += delta; msgEl.innerHTML = md(assistantMsg.content); el.scrollTop = el.scrollHeight; }
+                } catch(e) {}
+            }
+        }
+        save(); renderSidebar();
+    } catch(e) {
+        thinking.remove();
+        const err = document.createElement('div'); err.className = 'msg-thinking';
+        err.textContent = 'Error: ' + (e.message || 'Server not running'); el.appendChild(err);
+    }
+    isStreaming = false;
+    document.getElementById('send-btn').disabled = !input.value.trim();
+}
+
+function setStatus(status) {
+    const dot = document.getElementById('status-dot');
+    const label = document.getElementById('status-label');
+    const ind = document.getElementById('status-indicator');
+    if (status === 'running')      { dot.className = 'running'; label.textContent = 'Running';    ind.className = 'running'; }
+    else if (status === 'loading') { dot.className = 'loading'; label.textContent = 'Loading...'; ind.className = 'loading'; }
+    else                           { dot.className = '';         label.textContent = 'Stopped';    ind.className = ''; }
+}
+
+function setModel(m) {
+    currentModel = m;
+    document.getElementById('model-pill-text').textContent = nodePath.basename(m) || 'No model';
+    for (const opt of document.getElementById('model-select').options) {
+        if (opt.value === m) { document.getElementById('model-select').value = m; break; }
+    }
+}
+
+ipcRenderer.on('model-changed', (_, m) => setModel(m));
+ipcRenderer.on('server-status', (_, s) => setStatus(s));
+
+function toggleSidebar() {
+    const isCollapsed = document.getElementById('sidebar').classList.toggle('collapsed');
+    document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+}
+document.getElementById('new-chat-btn').addEventListener('click', newChat);
+document.getElementById('new-chat-topbar').addEventListener('click', newChat);
+document.getElementById('sidebar-toggle').addEventListener('click', toggleSidebar);
+document.getElementById('sidebar-toggle-expanded').addEventListener('click', toggleSidebar);
+document.getElementById('settings-sidebar-btn').addEventListener('click', () => ipcRenderer.invoke('open-settings'));
+document.getElementById('download-sidebar-btn').addEventListener('click', () => ipcRenderer.invoke('open-download'));
+document.getElementById('send-btn').addEventListener('click', send);
+document.getElementById('msg-input').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+document.getElementById('msg-input').addEventListener('input', function() {
+    this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 180) + 'px';
+    document.getElementById('send-btn').disabled = !this.value.trim() || isStreaming;
+});
+
+let ctxTargetId = null;
+const ctxMenu = document.getElementById('ctx-menu');
+function showCtxMenu(e, id) {
+    ctxTargetId = id; ctxMenu.style.display = 'block';
+    ctxMenu.style.left = Math.min(e.clientX, window.innerWidth-160) + 'px';
+    ctxMenu.style.top = Math.min(e.clientY, window.innerHeight-80) + 'px';
+}
+function hideCtxMenu() { ctxMenu.style.display = 'none'; ctxTargetId = null; }
+document.getElementById('ctx-rename').addEventListener('click', () => {
+    const id = ctxTargetId; hideCtxMenu();
+    const chat = getChat(id); if (!chat) return;
+    const el = document.querySelector(`.chat-item[data-id="${id}"]`); if (!el) return;
+    const inp = document.createElement('input');
+    inp.value = chat.title;
+    inp.style.cssText = 'width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px;padding:3px 6px;outline:none;';
+    el.innerHTML = ''; el.appendChild(inp); inp.focus(); inp.select();
+    const commit = () => { if (inp.value.trim()) { chat.title = inp.value.trim(); save(); } renderSidebar(); };
+    inp.addEventListener('blur', commit);
+    inp.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); inp.blur(); } if (e.key==='Escape') renderSidebar(); });
+});
+document.getElementById('ctx-delete').addEventListener('click', () => {
+    const id = ctxTargetId; hideCtxMenu();
+    chats = chats.filter(c => c.id !== id); save();
+    if (currentChatId === id) { currentChatId = chats.length ? chats[0].id : null; renderMessages(); }
+    renderSidebar();
+});
+document.addEventListener('click', e => { if (!ctxMenu.contains(e.target)) hideCtxMenu(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideCtxMenu(); });
+
+async function init() {
+    const [models, model, status] = await Promise.all([
+        ipcRenderer.invoke('get-models'), ipcRenderer.invoke('get-model'), ipcRenderer.invoke('get-server-status'),
+    ]);
+    const sel = document.getElementById('model-select');
+    sel.innerHTML = '<option value="">Select model...</option>' + models.map(m => `<option value="${m}">${nodePath.basename(m)}</option>`).join('');
+    sel.addEventListener('change', () => { if (sel.value) ipcRenderer.invoke('select-model', sel.value); });
+    if (model) setModel(model);
+    setStatus(status);
+    renderSidebar();
+    if (chats.length) switchChat(chats[0].id);
+}
+init();
+</script>
+</body>
+</html>

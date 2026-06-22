@@ -1,0 +1,23 @@
+# Build output
+dist/
+out/
+
+# Dependencies
+node_modules/
+
+# macOS
+.DS_Store
+*.DS_Store
+
+# Logs
+*.log
+
+# Icon source (large binary files, icns is included)
+mlx-icon.iconset/
+
+# Test files
+test.js
+test-*.js
+
+# Sensitive / machine-specific
+launch.sh

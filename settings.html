@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>MLX Settings</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #1a1a1a; color: #e0e0e0; padding: 52px 24px 24px; -webkit-app-region: drag; }
+body * { -webkit-app-region: no-drag; }
+
+h2 { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 20px; }
+
+.setting { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid #252525; }
+.setting:last-of-type { border-bottom: none; }
+.setting-icon { width: 36px; height: 36px; background: #252525; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+.setting-body { flex: 1; }
+.setting-title { font-size: 14px; font-weight: 500; color: #e0e0e0; margin-bottom: 3px; }
+.setting-desc { font-size: 12px; color: #666; line-height: 1.4; margin-bottom: 10px; }
+
+.toggle { position: relative; width: 44px; height: 26px; flex-shrink: 0; margin-top: 4px; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #333; border-radius: 26px; transition: 0.2s; }
+.toggle-slider:before { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+input:checked + .toggle-slider { background: #007AFF; }
+input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+.port-input { background: #252525; border: 1px solid #333; border-radius: 8px; color: #e0e0e0; font-size: 14px; padding: 7px 12px; width: 100px; outline: none; }
+.port-input:focus { border-color: #007AFF; }
+
+.path-row { display: flex; gap: 8px; align-items: center; }
+.path-input { flex: 1; background: #252525; border: 1px solid #333; border-radius: 8px; color: #aaa; font-size: 12px; padding: 7px 12px; outline: none; font-family: monospace; }
+.browse-btn { background: #2a2a2a; border: 1px solid #444; color: #e0e0e0; font-size: 13px; padding: 7px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.browse-btn:hover { background: #333; }
+
+.slider-row { display: flex; flex-direction: column; gap: 6px; }
+input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; background: #333; border-radius: 2px; outline: none; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: white; border-radius: 50%; cursor: pointer; }
+.slider-labels { display: flex; justify-content: space-between; font-size: 11px; color: #555; }
+
+#footer { display: flex; justify-content: flex-end; padding-top: 16px; }
+.reset-btn { background: #252525; border: 1px solid #333; color: #e0e0e0; font-size: 13px; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
+.reset-btn:hover { background: #2a2a2a; }
+.save-btn { background: #007AFF; border: none; color: white; font-size: 13px; padding: 8px 20px; border-radius: 8px; cursor: pointer; margin-left: 8px; }
+.save-btn:hover { background: #0066dd; }
+</style>
+</head>
+<body>
+<h2>Settings</h2>
+
+<div class="setting">
+  <div class="setting-icon">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+  </div>
+  <div class="setting-body">
+    <div class="setting-title">Server Port</div>
+    <div class="setting-desc">Port the MLX server listens on.</div>
+    <input type="number" id="port" class="port-input" min="1024" max="65535" value="8080">
+  </div>
+</div>
+
+<div class="setting">
+  <div class="setting-icon">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8"><path d="M1 6l5 5 5-5M1 18l5-5 5 5M13 12h10"/></svg>
+  </div>
+  <div class="setting-body">
+    <div class="setting-title">Expose to network</div>
+    <div class="setting-desc">Allow other devices on your network to access the MLX server.</div>
+  </div>
+  <label class="toggle">
+    <input type="checkbox" id="expose">
+    <span class="toggle-slider"></span>
+  </label>
+</div>
+
+<div class="setting">
+  <div class="setting-icon">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+  </div>
+  <div class="setting-body">
+    <div class="setting-title">Model location</div>
+    <div class="setting-desc">Directory where your MLX models are stored.</div>
+    <div class="path-row">
+      <input type="text" id="model-path" class="path-input" readonly>
+      <button class="browse-btn" onclick="browseDir()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Browse
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="setting">
+  <div class="setting-icon">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+  </div>
+  <div class="setting-body">
+    <div class="setting-title">Context length</div>
+    <div class="setting-desc">How much conversation history the model can use.</div>
+    <div class="slider-row">
+      <input type="range" id="context" min="0" max="7" value="4">
+      <div class="slider-labels">
+        <span>4k</span><span>8k</span><span>16k</span><span>32k</span><span>64k</span><span>128k</span><span>192k</span><span>256k</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="footer">
+  <button class="reset-btn" onclick="resetDefaults()">Reset to defaults</button>
+  <button class="save-btn" onclick="save()">Save</button>
+</div>
+
+<script>
+const { ipcRenderer } = require('electron');
+const contextValues = [4096, 8192, 16384, 32768, 65536, 131072, 196608, 262144];
+
+ipcRenderer.invoke('get-settings').then(s => {
+    document.getElementById('port').value = s.port || 8080;
+    document.getElementById('expose').checked = s.expose || false;
+    document.getElementById('model-path').value = s.modelPath || '/Volumes/AI/LLMS';
+    const idx = contextValues.indexOf(s.contextLength);
+    document.getElementById('context').value = idx >= 0 ? idx : 4;
+});
+
+async function browseDir() {
+    const dir = await ipcRenderer.invoke('browse-dir');
+    if (dir) document.getElementById('model-path').value = dir;
+}
+
+function resetDefaults() {
+    document.getElementById('port').value = 8080;
+    document.getElementById('expose').checked = false;
+    document.getElementById('model-path').value = '/Volumes/AI/LLMS';
+    document.getElementById('context').value = 4;
+}
+
+function save() {
+    const settings = {
+        port: parseInt(document.getElementById('port').value) || 8080,
+        expose: document.getElementById('expose').checked,
+        modelPath: document.getElementById('model-path').value,
+        contextLength: contextValues[parseInt(document.getElementById('context').value)]
+    };
+    ipcRenderer.invoke('save-settings', settings);
+    window.close();
+}
+</script>
+</body>
+</html>
